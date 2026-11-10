@@ -1,0 +1,33 @@
+{
+  "name": "mysessions-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API do MySessions: registro diário da AT e geração do relatório semanal (DOCX/PDF).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "migrate": "node scripts/migrate.js up",
+    "migrate:down": "node scripts/migrate.js down",
+    "smoke:test": "node scripts/smoke-test.js",
+    "user:create": "node scripts/create-user.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "docx": "^9.15.3",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.4",
+    "helmet": "^8.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "openai": "^7.54.0",
+    "pg": "^8.23.1",
+    "sequelize": "^6.37.8",
+    "umzug": "^3.8.3",
+    "zod": "^4.6.7"
+  }
+}
