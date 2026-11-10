@@ -15,7 +15,8 @@
     "smoke:test": "node scripts/smoke-test.js",
     "user:create": "node scripts/create-user.js",
     "seed": "node scripts/seed.js",
-    "setup": "npm run migrate && npm run seed"
+    "setup": "npm run migrate && npm run seed",
+    "seed:teste": "node scripts/seed-teste.js"
   },
   "dependencies": {
     "@simplewebauthn/server": "^14.1.0",
