@@ -20,10 +20,11 @@ RUN mkdir -p /app/storage/reports && chown -R node:node /app
 VOLUME ["/app/storage"]
 
 USER node
-EXPOSE 3333
+EXPOSE 3333 80
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD curl -fsS http://localhost:3333/api/health || exit 1
+  CMD curl -fsS "http://localhost:${PORT:-3333}${API_PREFIX:-/api}/health" || exit 1
 
+# O healthcheck usa a PORT e o API_PREFIX configurados no ambiente.
 # Aplica as migrações pendentes e sobe a API (a seed é um comando à parte: npm run seed).
 CMD ["sh", "-c", "npm run migrate && node app.js"]
