@@ -18,6 +18,7 @@ export const QUESTION_LABELS = {
   crisis: { label: 'Crise?' }, repetitive: { label: 'Comportamentos repetitivos?' }, leftRoom: { label: 'Saiu da sala?' }, sensory: { label: 'Sensibilidade sensorial?' },
   understood: { label: 'Entendeu as orientações?' }, repeat: { label: 'Precisou repetir?' }, learnedNew: { label: 'Aprendeu algo novo?' }, difficulty: { label: 'Dificuldade específica?' },
   whatIDid: { label: 'O que fiz para ajudar?', type: 'text' }, verbalCues: { label: 'Pistas verbais', type: 'check' }, redirected: { label: 'Redirecionei a atenção', type: 'check' }, autonomy: { label: 'Incentivei a autonomia', type: 'check' }, socialMediation: { label: 'Mediação social', type: 'check' }, otherHelp: { label: 'Outro', type: 'text' },
+  snackAte: { label: 'Como foi a alimentação?', type: 'choice' }, snackAlone: { label: 'Comeu sozinho(a)?' }, snackSeated: { label: 'Ficou sentado(a) durante o lanche?' }, snackNew: { label: 'Aceitou alimentos novos?' }, snackAsked: { label: 'Pediu o que queria (água, lanche)?' }, snackPeers: { label: 'Interagiu com os colegas?' }, snackNote: { label: 'Observação sobre o lanche', type: 'text' },
   routineChange: { label: 'Mudança de rotina?' }, tripExam: { label: 'Passeio ou prova?' }, teacherAbsent: { label: 'Professor(a) faltou?' }, sick: { label: 'Gripado(a) ou sonolento(a)?' }, otherFact: { label: 'Outro fato relevante?', type: 'text' },
 };
 
