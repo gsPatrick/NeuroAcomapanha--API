@@ -31,6 +31,11 @@ const schema = z.object({
   OPENAI_MAX_RETRIES: z.coerce.number().int().min(0).max(6).default(2),
   OPENAI_BASE_URL: z.string().optional().default(''),
 
+  // Log: LOG_REQUESTS = uma linha por requisição HTTP. REPORT_DEBUG = mostra no log o texto que vai e volta da IA e as
+  // notas da AT (dados sensíveis de uma criança: ligue só para investigar e desligue depois).
+  LOG_REQUESTS: bool('true'),
+  REPORT_DEBUG: bool('false'),
+
   AUTO_GENERATE_REPORT: bool('true'),
   REPORTS_STORAGE_DIR: z.string().default('./storage/reports'),
   REPORT_LOGO_PATH: z.string().optional().default(''),

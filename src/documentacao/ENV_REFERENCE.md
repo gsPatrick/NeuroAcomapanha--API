@@ -29,3 +29,5 @@ Validadas em `src/config/env.js` na subida: a API não inicia com valor inválid
 | WEBAUTHN_RP_ID | não | localhost | Face ID: domínio do **app**, sem porta (ex.: `app.seudominio.com.br`) |
 | WEBAUTHN_RP_NAME | não | Neuro Acompanha | Face ID: nome mostrado no aparelho |
 | WEBAUTHN_ORIGIN | não | http://localhost:3000 | Face ID: endereço completo do app (HTTPS em produção); várias, separadas por vírgula |
+| REPORT_DEBUG | não | false | `true` mostra no log o texto que vai e volta da IA e as notas da AT. **Dado sensível de uma criança**: ligue só para investigar e desligue depois |
+| LOG_REQUESTS | não | true | Uma linha de log por requisição HTTP (método, caminho, status, tempo; nunca corpo nem parâmetros) |

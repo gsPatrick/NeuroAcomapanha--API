@@ -4,6 +4,7 @@ API do MySessions: guarda o registro diário da AT e **gera o relatório semanal
 
 - [ONBOARDING.md](ONBOARDING.md) — rodar local, migrar o banco, criar o primeiro usuário
 - [ENV_REFERENCE.md](ENV_REFERENCE.md) — todas as variáveis de ambiente
+- [LOGS.md](LOGS.md) — como ler o log da geração do relatório (e ver o que a IA recebeu e escreveu)
 - features/ — [Auth](features/Auth.md) · [Children](features/Children.md) · [Records](features/Records.md) · [Attendance](features/Attendance.md) · [Reports](features/Reports.md)
 
 ## Fluxo

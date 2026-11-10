@@ -1,8 +1,11 @@
 import { z } from 'zod';
 import { generateStructured } from '../../providers/openai/index.js';
+import { createLogger } from '../../utils/logger.js';
 import { cleanText, firstName } from '../../utils/text.js';
 import { MARK_LABELS, QUESTION_LABELS } from '../records/records.constants.js';
 import { NARRATIVE_SYSTEM_PROMPT, buildDayPrompt } from './report-narrative.prompts.js';
+
+const log = createLogger('redação');
 
 const narrativeSchema = z.object({
   blocks: z.array(z.object({ blockId: z.string(), observed: z.string().min(1).max(1500), goals: z.array(z.string().min(1).max(300)).min(1).max(4) })),
@@ -30,6 +33,26 @@ function toPromptBlock(record, block) {
   };
 }
 
+const normalize = (text) => text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9 ]/g, ' ');
+const words = (text) => new Set(normalize(text).split(' ').filter((word) => word.length > 3));
+
+// Confere a regra "não repetir objetivos" no dia inteiro: objetivos iguais ou quase iguais em momentos diferentes.
+function findRepeatedGoals(stages) {
+  const goals = stages.flatMap((stage) => stage.goals.map((goal) => ({ stage: stage.title, goal })));
+  const repeated = [];
+  for (let first = 0; first < goals.length; first += 1) {
+    for (let second = first + 1; second < goals.length; second += 1) {
+      if (goals[first].stage === goals[second].stage) continue;
+      const a = words(goals[first].goal);
+      const b = words(goals[second].goal);
+      const shared = [...a].filter((word) => b.has(word)).length;
+      const similarity = shared / Math.max(1, Math.min(a.size, b.size));
+      if (similarity >= 0.8) repeated.push(`"${goals[first].goal}" (${goals[first].stage}) ≈ "${goals[second].goal}" (${goals[second].stage})`);
+    }
+  }
+  return repeated;
+}
+
 const hasFacts = (item) => item.notes.length || item.marks.length || item.answers.length || item.observedByAT;
 const isComplete = (item) => item.observedByAT && item.goalsByAT;
 
@@ -40,24 +63,55 @@ const isComplete = (item) => item.observedByAT && item.goalsByAT;
  * - texto escrito pela AT nunca é reescrito: a IA só completa o que falta.
  */
 export async function writeDayStages(child, record, weekday) {
-  const items = record.blocks.map((block) => toPromptBlock(record, block)).filter(hasFacts);
-  const needsAI = items.filter((item) => !isComplete(item));
+  const items = record.blocks.map((block) => toPromptBlock(record, block));
+  const withFacts = items.filter(hasFacts);
+  const needsAI = withFacts.filter((item) => !isComplete(item));
+  const omitted = items.filter((item) => !hasFacts(item));
+
+  log.info(`${weekday}: ${record.blocks.length} momento(s) no registro.`, {
+    comDados: withFacts.map((item) => item.title).join(' | ') || 'nenhum',
+    ...(omitted.length ? { omitidosPorFaltaDeDados: omitted.map((item) => item.title).join(' | ') } : {}),
+    ...(withFacts.length - needsAI.length ? { escritosPelaAT_semIA: withFacts.filter(isComplete).map((item) => item.title).join(' | ') } : {}),
+  });
+  withFacts.forEach((item) =>
+    log.debug(`Fatos do momento "${item.title}"`, { anotacoes: item.notes.length, marcacoes: item.marks.join(', ') || '-', respostas: item.answers.length }),
+  );
 
   const written = new Map();
   if (needsAI.length) {
-    const { data } = await generateStructured({
-      system: NARRATIVE_SYSTEM_PROMPT,
-      user: buildDayPrompt({ weekday, childName: firstName(child.name), blocks: needsAI }),
-      schema: narrativeSchema,
-      schemaName: 'relatorio_dia',
+    const user = buildDayPrompt({ weekday, childName: firstName(child.name), blocks: needsAI });
+    log.info(`Enviando ${needsAI.length} momento(s) à IA.`, { momentos: needsAI.map((item) => item.title).join(' | ') });
+    log.block('Mensagem enviada à IA (o que ela recebe da AT)', user);
+
+    const { data } = await generateStructured({ system: NARRATIVE_SYSTEM_PROMPT, user, schema: narrativeSchema, schemaName: 'relatorio_dia' });
+
+    const requestedIds = new Set(needsAI.map((item) => item.blockId));
+    data.blocks.forEach((block) => {
+      if (!requestedIds.has(block.blockId)) log.warn('A IA devolveu um momento que não foi pedido: ignorado.', { blockId: block.blockId });
+      else written.set(block.blockId, block);
     });
-    data.blocks.forEach((block) => written.set(block.blockId, block));
+    needsAI.filter((item) => !written.has(item.blockId)).forEach((item) =>
+      log.warn(`A IA NÃO devolveu o momento "${item.title}": ele ficará fora do relatório.`, { blockId: item.blockId }),
+    );
+    needsAI.filter((item) => written.has(item.blockId)).forEach((item) => {
+      const block = written.get(item.blockId);
+      log.info(`IA redigiu "${item.title}": ${block.observed.length} caracteres e ${block.goals.length} objetivo(s).`);
+      log.block(`Texto da IA para "${item.title}"`, `Comportamentos observados:\n${block.observed}\nObjetivos trabalhados:\n${block.goals.map((goal) => `- ${goal}`).join('\n')}`);
+    });
+  } else {
+    log.info('Nenhum momento precisa da IA neste dia.');
   }
 
-  return items.map((item) => {
+  const stages = withFacts.map((item) => {
     const ai = written.get(item.blockId);
     const observed = cleanText(item.observedByAT) || cleanText(ai?.observed);
     const goals = item.goalsByAT ?? ai?.goals ?? [];
     return { title: item.title, observed, goals: goals.map(cleanText).filter(Boolean) };
   }).filter((stage) => stage.observed);
+
+  const repeated = findRepeatedGoals(stages);
+  if (repeated.length) log.warn(`Objetivos repetidos entre momentos (a regra pede objetivos distintos): ${repeated.length}.`, { pares: repeated.join(' ;; ') });
+  else if (stages.length > 1) log.info('Conferência: nenhum objetivo repetido entre os momentos do dia.');
+
+  return stages;
 }

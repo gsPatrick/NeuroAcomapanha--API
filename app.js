@@ -4,6 +4,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { env } from './src/config/env.js';
 import { sequelize } from './src/config/database.js';
+import { requestLogger } from './src/middlewares/request-logger.js';
 import { errorHandler } from './src/middlewares/error-handler.js';
 import { notFoundHandler } from './src/middlewares/not-found.js';
 import { router } from './src/routes/index.js';
@@ -18,6 +19,7 @@ app.use(helmet());
 const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
 app.use(cors({ origin: allowedOrigins.includes('*') ? true : allowedOrigins }));
 app.use(rateLimit({ windowMs: env.RATE_LIMIT_WINDOW_MS, limit: env.RATE_LIMIT_MAX, standardHeaders: true, legacyHeaders: false }));
+app.use(requestLogger);
 app.use(express.json({ limit: '4mb' }));
 
 app.use(env.API_PREFIX, router);

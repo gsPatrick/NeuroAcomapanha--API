@@ -31,7 +31,7 @@ await new Promise((resolve) => fakeOpenAI.listen(0, '127.0.0.1', resolve));
 const storage = await fs.mkdtemp(path.join(os.tmpdir(), 'mysessions-smoke-'));
 Object.assign(process.env, {
   OPENAI_API_KEY: 'sk-fake', OPENAI_BASE_URL: `http://127.0.0.1:${fakeOpenAI.address().port}/v1`, OPENAI_MAX_RETRIES: '0',
-  REPORTS_STORAGE_DIR: storage, AUTO_GENERATE_REPORT: 'true',
+  REPORTS_STORAGE_DIR: storage, AUTO_GENERATE_REPORT: 'true', LOG_REQUESTS: 'false',
 });
 
 // 2) API real, em porta aleatória.

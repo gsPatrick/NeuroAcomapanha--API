@@ -22,3 +22,9 @@ export function isWeekComplete(child, weekStart, records) {
   const allClosed = dates.every((date) => ['finished', 'suspended'].includes(byDate.get(date)?.status));
   return allClosed && dates.some((date) => byDate.get(date)?.status === 'finished');
 }
+
+// Situação de cada dia de atendimento da semana, para o log: [{ date, status }] (status 'sem registro' se não existe).
+export function describeWeek(child, weekStart, records) {
+  const byDate = new Map(records.map((record) => [record.date, record]));
+  return attendanceDates(child, weekStart).map((date) => ({ date, status: byDate.get(date)?.status ?? 'sem registro' }));
+}
