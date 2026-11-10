@@ -14,7 +14,9 @@ app.disable('x-powered-by');
 // Atrás do proxy do Easypanel/Traefik: confia em 1 salto para enxergar o IP real (limite de requisições por usuário).
 app.set('trust proxy', 1);
 app.use(helmet());
-app.use(cors({ origin: env.CORS_ORIGIN.split(',').map((origin) => origin.trim()), credentials: true }));
+// CORS_ORIGIN=* libera qualquer origem (a autenticação é por token no cabeçalho, não por cookie).
+const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
+app.use(cors({ origin: allowedOrigins.includes('*') ? true : allowedOrigins }));
 app.use(rateLimit({ windowMs: env.RATE_LIMIT_WINDOW_MS, limit: env.RATE_LIMIT_MAX, standardHeaders: true, legacyHeaders: false }));
 app.use(express.json({ limit: '4mb' }));
 

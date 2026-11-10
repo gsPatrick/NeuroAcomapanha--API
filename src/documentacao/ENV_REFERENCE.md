@@ -7,7 +7,7 @@ Validadas em `src/config/env.js` na subida: a API não inicia com valor inválid
 | NODE_ENV | não | development | development, test ou production |
 | PORT | não | 3333 | Porta HTTP |
 | API_PREFIX | não | /api | Prefixo das rotas (`/api/v1/...`) |
-| CORS_ORIGIN | não | http://localhost:3000 | Origens permitidas, separadas por vírgula |
+| CORS_ORIGIN | não | http://localhost:3000 | Origens permitidas, separadas por vírgula. `*` libera qualquer origem |
 | DATABASE_URL | **sim** | — | `postgres://usuario:senha@host:5432/mysessions` |
 | DB_SSL | não | false | `true` para bancos que exigem SSL |
 | DB_LOGGING | não | false | Loga as queries do Sequelize |
