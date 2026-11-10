@@ -1,6 +1,7 @@
 // Teste de ponta a ponta: banco real + OpenAI FALSA (servidor local que imita a Responses API).
 // Uso: npm run smoke:test   (SMOKE_OUT=/pasta copia o PDF/DOCX gerados para essa pasta)
 import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
@@ -52,6 +53,44 @@ const call = async (method, url, body, expected = 200) => {
   return isFile ? payload : payload?.data;
 };
 
+
+// Autenticador de software (imita o Face ID do aparelho): gera as respostas WebAuthn reais, com assinatura ES256.
+const b64 = (buffer) => Buffer.from(buffer).toString('base64url');
+const sha256 = (data) => crypto.createHash('sha256').update(data).digest();
+function softwareAuthenticator() {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync('ec', { namedCurve: 'P-256' });
+  const jwk = publicKey.export({ format: 'jwk' });
+  const credentialId = crypto.randomBytes(32);
+  const origin = 'http://localhost:3000';
+  const rpIdHash = sha256('localhost');
+  let counter = 0;
+  const counterBytes = (value) => { const bytes = Buffer.alloc(4); bytes.writeUInt32BE(value); return bytes; };
+  // COSE EC2 / ES256 em CBOR: {1:2, 3:-7, -1:1, -2:x, -3:y}
+  const cose = Buffer.concat([Buffer.from('a501020326200121' + '5820', 'hex'), Buffer.from(jwk.x, 'base64url'), Buffer.from('225820', 'hex'), Buffer.from(jwk.y, 'base64url')]);
+
+  return {
+    create(options) {
+      const clientDataJSON = Buffer.from(JSON.stringify({ type: 'webauthn.create', challenge: options.challenge, origin, crossOrigin: false }));
+      const credentialData = Buffer.concat([Buffer.alloc(16), Buffer.from([0, credentialId.length]), credentialId, cose]);
+      const authData = Buffer.concat([rpIdHash, Buffer.from([0x45]), counterBytes(counter), credentialData]); // UP + UV + AT
+      const attestationObject = Buffer.concat([
+        Buffer.from('a3', 'hex'), Buffer.from('63666d74', 'hex'), Buffer.from('646e6f6e65', 'hex'),
+        Buffer.from('6761747453746d74', 'hex'), Buffer.from('a0', 'hex'),
+        Buffer.from('6861757468446174' + '61', 'hex'), Buffer.from([0x59, authData.length >> 8, authData.length & 0xff]), authData,
+      ]);
+      return { id: b64(credentialId), rawId: b64(credentialId), type: 'public-key', clientExtensionResults: {}, response: { clientDataJSON: b64(clientDataJSON), attestationObject: b64(attestationObject), transports: ['internal'] } };
+    },
+    get(options, { tamper = false } = {}) {
+      counter += 1;
+      const clientDataJSON = Buffer.from(JSON.stringify({ type: 'webauthn.get', challenge: options.challenge, origin, crossOrigin: false }));
+      const authData = Buffer.concat([rpIdHash, Buffer.from([0x05]), counterBytes(counter)]); // UP + UV
+      const signed = Buffer.concat([authData, sha256(tamper ? Buffer.from('outro') : clientDataJSON)]);
+      const signature = crypto.sign('sha256', signed, privateKey);
+      return { id: b64(credentialId), rawId: b64(credentialId), type: 'public-key', clientExtensionResults: {}, response: { authenticatorData: b64(authData), clientDataJSON: b64(clientDataJSON), signature: b64(signature), userHandle: null } };
+    },
+  };
+}
+
 const email = `smoke-${Date.now()}@example.com`;
 try {
   // Validação Zod e auth
@@ -61,6 +100,44 @@ try {
   const auth = await call('POST', '/auth/register', { fullName: 'Amanda Teste', email, password: 'senha-forte-123' }, 201);
   token = auth.token;
   await call('POST', '/auth/login', { email, password: 'errada-errada' }, 401);
+
+
+  // Primeiro acesso: conta com senha provisória só define a própria senha uma vez.
+  await User.update({ mustChangePassword: true }, { where: { email } });
+  const provisional = await call('POST', '/auth/login', { email, password: 'senha-forte-123' });
+  assert.equal(provisional.user.mustChangePassword, true);
+  token = provisional.token;
+  await call('POST', '/auth/first-password', { newPassword: 'curta' }, 422);
+  const defined = await call('POST', '/auth/first-password', { newPassword: 'minha-senha-nova-1' });
+  assert.equal(defined.mustChangePassword, false);
+  await call('POST', '/auth/first-password', { newPassword: 'outra-senha-nova-1' }, 409);
+  await call('POST', '/auth/login', { email, password: 'senha-forte-123' }, 401); // a provisória deixou de valer
+  token = (await call('POST', '/auth/login', { email, password: 'minha-senha-nova-1' })).token;
+
+  // Face ID (WebAuthn): cadastra o aparelho e entra sem senha; assinatura falsa e desafio trocado são recusados.
+  const device = softwareAuthenticator();
+  const registration = await call('POST', '/auth/passkeys/register/options');
+  assert.equal(registration.options.rp.id, 'localhost');
+  assert.equal(registration.options.authenticatorSelection.userVerification, 'required');
+  await call('POST', '/auth/passkeys/register/verify', { challengeToken: 'x'.repeat(20), response: device.create(registration.options) }, 400);
+  assert.deepEqual(await call('POST', '/auth/passkeys/register/verify', { challengeToken: registration.challengeToken, response: device.create(registration.options), deviceName: 'iPhone' }, 201), { enabled: true });
+
+  const savedToken = token;
+  token = undefined;
+  const login = await call('POST', '/auth/passkeys/login/options');
+  const entered = await call('POST', '/auth/passkeys/login/verify', { challengeToken: login.challengeToken, response: device.get(login.options) });
+  assert.equal(entered.user.email, email);
+  assert.ok(entered.token);
+  const forged = await call('POST', '/auth/passkeys/login/options');
+  await call('POST', '/auth/passkeys/login/verify', { challengeToken: forged.challengeToken, response: device.get(forged.options, { tamper: true }) }, 401);
+  const stale = await call('POST', '/auth/passkeys/login/options');
+  await call('POST', '/auth/passkeys/login/verify', { challengeToken: login.challengeToken, response: device.get(stale.options) }, 401); // desafio de outra tentativa
+  token = savedToken;
+  await call('DELETE', '/auth/passkeys', undefined, 204);
+  token = undefined;
+  const afterRemoval = await call('POST', '/auth/passkeys/login/options');
+  await call('POST', '/auth/passkeys/login/verify', { challengeToken: afterRemoval.challengeToken, response: device.get(afterRemoval.options) }, 401);
+  token = savedToken;
 
   // Perfil da AT: nome curto, função padrão e desde quando está na plataforma; ela pode trocar função/ilustração.
   const profile = await call('GET', '/auth/me');

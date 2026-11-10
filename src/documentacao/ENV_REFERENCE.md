@@ -25,3 +25,7 @@ Validadas em `src/config/env.js` na subida: a API não inicia com valor inválid
 | SOFFICE_BIN | não | soffice | Executável do LibreOffice |
 | SOFFICE_TIMEOUT_MS | não | 90000 | Tempo máximo da conversão para PDF |
 | RATE_LIMIT_WINDOW_MS / RATE_LIMIT_MAX | não | 60000 / 300 | Limite de requisições por IP |
+| SEED_TEMP_PASSWORD | não | vazio | Senha provisória da conta da Amanda na seed (mín. 8). Vazio = sorteada e mostrada uma vez no console |
+| WEBAUTHN_RP_ID | não | localhost | Face ID: domínio do **app**, sem porta (ex.: `app.seudominio.com.br`) |
+| WEBAUTHN_RP_NAME | não | Neuro Acompanha | Face ID: nome mostrado no aparelho |
+| WEBAUTHN_ORIGIN | não | http://localhost:3000 | Face ID: endereço completo do app (HTTPS em produção); várias, separadas por vírgula |

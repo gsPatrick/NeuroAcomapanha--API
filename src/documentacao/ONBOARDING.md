@@ -36,3 +36,10 @@ Crie uma migration nova em `migrations/` (`up`/`down`), ajuste o model e rode `n
 npm run user:create -- "Amanda Brandão" amanda@exemplo.com uma-senha-forte
 ```
 Cria a conta (ou redefine a senha se o e-mail já existe). No app: `NEXT_PUBLIC_API_URL=http://localhost:3333/api` (ver `.env.example` do app) e `CORS_ORIGIN` da API igual ao endereço do app.
+
+## Seed (dados da Amanda)
+
+```bash
+npm run setup      # migrate + seed (também pode rodar separado: npm run seed)
+```
+Cria a conta `amandabpleite@gmail.com` (com a Maria Fernanda cadastrada) com **senha provisória**: a de `SEED_TEMP_PASSWORD` ou uma sorteada, mostrada **uma única vez** no console. Ela define a própria senha no primeiro acesso. Rodar de novo não muda nada em conta que já existe. Dados em `seeds/amanda.js`.

@@ -13,9 +13,12 @@
     "migrate": "node scripts/migrate.js up",
     "migrate:down": "node scripts/migrate.js down",
     "smoke:test": "node scripts/smoke-test.js",
-    "user:create": "node scripts/create-user.js"
+    "user:create": "node scripts/create-user.js",
+    "seed": "node scripts/seed.js",
+    "setup": "npm run migrate && npm run seed"
   },
   "dependencies": {
+    "@simplewebauthn/server": "^14.1.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "docx": "^9.15.3",

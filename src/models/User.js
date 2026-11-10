@@ -13,6 +13,8 @@ User.init(
     role: { type: DataTypes.STRING(120) },
     photo: { type: DataTypes.TEXT },
     avatar: { type: DataTypes.JSONB },
+    // Conta criada com senha provisória: a AT define a própria senha no primeiro acesso.
+    mustChangePassword: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
   },
   { sequelize, tableName: 'users', underscored: true, timestamps: true },
 );

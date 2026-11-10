@@ -19,6 +19,10 @@ const schema = z.object({
   DB_LOGGING: bool('false'),
 
   JWT_SECRET: z.string().min(16, 'JWT_SECRET precisa ter ao menos 16 caracteres'),
+  // Face ID / biometria (WebAuthn): o RP ID é o domínio do APP (sem porta) e a origem é o endereço completo do app.
+  WEBAUTHN_RP_ID: z.string().default('localhost'),
+  WEBAUTHN_RP_NAME: z.string().default('Neuro Acompanha'),
+  WEBAUTHN_ORIGIN: z.string().default('http://localhost:3000'), // várias origens: separe por vírgula
   JWT_EXPIRES_IN: z.string().default('7d'),
 
   OPENAI_API_KEY: z.string().optional().default(''),

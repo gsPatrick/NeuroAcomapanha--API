@@ -23,3 +23,14 @@ export const updateProfileSchema = z
   })
   .partial()
   .refine((body) => Object.keys(body).length > 0, 'Envie ao menos um campo.');
+
+export const firstPasswordSchema = z.object({ newPassword: z.string().min(8, 'A senha precisa ter ao menos 8 caracteres.').max(100) });
+
+// Resposta do aparelho (WebAuthn) + o desafio assinado que a API entregou nas opções. `response` é validado pela biblioteca.
+const challengeToken = z.string().min(10).max(2000);
+export const passkeyRegisterSchema = z.object({
+  challengeToken,
+  response: z.record(z.string(), z.unknown()),
+  deviceName: z.string().trim().max(120).optional(),
+});
+export const passkeyLoginSchema = z.object({ challengeToken, response: z.record(z.string(), z.unknown()) });
