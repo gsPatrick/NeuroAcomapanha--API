@@ -12,7 +12,11 @@ export async function getOwnedChild(userId, childId) {
 export const listChildren = (userId) => Child.findAll({ where: { userId }, order: [['position', 'ASC'], ['createdAt', 'ASC']] });
 
 // `startedAt` = quando a AT passou a acompanhar: o histórico do perfil começa nessa data (padrão: hoje).
-export const createChild = (userId, data) => Child.create({ startedAt: todayKey(), ...data, userId });
+// Aluno novo entra no fim da lista (a ordem é a do cadastro).
+export async function createChild(userId, data) {
+  const position = await Child.count({ where: { userId } });
+  return Child.create({ startedAt: todayKey(), position, ...data, userId });
+}
 
 export async function updateChild(userId, childId, data) {
   const child = await getOwnedChild(userId, childId);

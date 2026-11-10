@@ -17,7 +17,7 @@
     "seed": "node scripts/seed.js",
     "setup": "npm run migrate && npm run seed",
     "seed:teste": "node scripts/seed-teste.js",
-    "seed:semana": "node scripts/seed-teste.js --semana-toda"
+    "seed:semana": "node scripts/seed-teste.js --semana-passada"
   },
   "dependencies": {
     "@simplewebauthn/server": "^14.1.0",

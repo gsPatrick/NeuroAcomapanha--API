@@ -177,6 +177,14 @@ try {
   assert.equal(kept.routine[1].classes[0], 'Português', 'rotina não enviada é preservada');
   assert.equal((await call('GET', '/children')).length, 1);
 
+  // Aluno novo depois do cadastro: entra no fim da lista; editar (PATCH) muda só o que foi enviado.
+  const added = await call('POST', '/children', { name: 'Aluno Novo', conditions: [{ id: 'tdah', levels: {} }] }, 201);
+  assert.equal(added.position, 1);
+  const renamed = await call('PATCH', `/children/${added.id}`, { name: 'Aluno Novo Editado', photo: null });
+  assert.equal(renamed.name, 'Aluno Novo Editado');
+  assert.deepEqual(renamed.conditions, [{ id: 'tdah', levels: {} }]);
+  await call('DELETE', `/children/${added.id}`, undefined, 204);
+
   const records = `/children/${child.id}/records`;
   const reports = `/children/${child.id}/reports`;
 

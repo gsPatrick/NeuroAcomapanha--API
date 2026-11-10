@@ -5,7 +5,7 @@ Cada AT só enxerga os próprios alunos (404 `CHILD_NOT_FOUND` para os demais).
 | Método | Rota | Descrição |
 |---|---|---|
 | GET | / | Lista |
-| POST | / | Cria |
+| POST | / | Cria (entra no fim da lista) |
 | PUT | / | **Cadastro completo de uma vez** (onboarding do app) |
 | GET/PATCH/DELETE | /:childId | Lê / altera / apaga (apaga registros e relatórios junto) |
 

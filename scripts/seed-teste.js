@@ -3,8 +3,9 @@
 // Pode rodar de novo: refaz o preenchimento (marcações e anotações) dos dias da semana. Não mexe na conta real da Amanda.
 //
 // Senha da conta de teste: SEED_TEST_PASSWORD (mín. 8) — sem ela, uma é sorteada e mostrada aqui (só na criação).
-// Uso: npm run seed:teste            (dias da semana até hoje)
-//      npm run seed:semana           (a semana TODA, segunda a sexta, inclusive dias que ainda não chegaram: relatório completo)
+// Uso: npm run seed:teste            (dias da semana atual até hoje)
+//      npm run seed:semana           (a SEMANA PASSADA inteira, segunda a sexta: todos os dias já passaram, então dá para
+//                                     abrir, editar e gerar o relatório completo no app)
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
 import { Child, DailyRecord, sequelize, User } from '../src/models/index.js';
@@ -14,8 +15,8 @@ import { NOTES, summaries, testChild, testUser } from '../seeds/amanda-teste.js'
 // "Hoje" no Brasil (o servidor pode estar em UTC e já estar no dia seguinte).
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 
-// --semana-toda: preenche também os dias depois de hoje (só para ver um relatório completo; são dados de teste).
-const wholeWeek = process.argv.includes('--semana-toda');
+// --semana-passada: em vez da semana atual, preenche a semana anterior inteira.
+const lastWeek = process.argv.includes('--semana-passada');
 
 const pick = (list, index) => list[index % list.length];
 
@@ -62,16 +63,19 @@ try {
     console.log(`Conta de teste já existe: ${testUser.email} (senha mantida).`);
   }
 
-  let child = await Child.findOne({ where: { userId: user.id } });
-  if (!child) child = await Child.create({ ...testChild, userId: user.id, startedAt: addDays(mondayOf(today), -7) });
+  const monday = lastWeek ? addDays(mondayOf(today), -7) : mondayOf(today);
 
-  // Todos os dias de atendimento da semana de hoje (até hoje, ou a semana toda com --semana-toda).
-  const monday = mondayOf(today);
+  // O histórico da criança começa em `startedAt`: precisa ser até a segunda-feira da semana preenchida.
+  let child = await Child.findOne({ where: { userId: user.id }, order: [['position', 'ASC'], ['createdAt', 'ASC']] });
+  if (!child) child = await Child.create({ ...testChild, userId: user.id, startedAt: monday });
+  else if (!child.startedAt || child.startedAt > monday) await child.update({ startedAt: monday });
+
+  // Todos os dias de atendimento da semana escolhida (a atual vai só até hoje).
   let filled = 0;
   for (let offset = 0; offset < 7; offset += 1) {
     const date = addDays(monday, offset);
     const routineDay = child.routine[weekdayOf(date)];
-    if ((!wholeWeek && date > today) || !routineDay?.attends) continue;
+    if (date > today || !routineDay?.attends) continue;
 
     const day = buildDay(date, routineDay, filled);
     const values = { ...day, status: 'finished', finishedAt: new Date(), suspensionNote: null, cursor: null };
@@ -83,7 +87,7 @@ try {
   }
 
   console.log(`Pronto: ${filled} dia(s) da semana de ${monday}. No app: Crianças > ${testChild.name.split(' ')[0]} > semana > Gerar relatório.`);
-  if (wholeWeek) console.log('Semana completa: o relatório também sai sozinho se você finalizar o último dia pelo app.');
+  if (lastWeek) console.log('Semana passada completa. No app: Crianças > Maria > histórico (semana de ' + monday + ') ou, na semana atual, "Semana anterior".');
 } finally {
   await sequelize.close();
 }

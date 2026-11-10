@@ -43,3 +43,11 @@ Cria a conta (ou redefine a senha se o e-mail já existe). No app: `NEXT_PUBLIC_
 npm run setup      # migrate + seed (também pode rodar separado: npm run seed)
 ```
 Cria a conta `amandabpleite@gmail.com` (com a Maria Fernanda cadastrada) com **senha provisória**: a de `SEED_TEMP_PASSWORD` ou uma sorteada, mostrada **uma única vez** no console. Ela define a própria senha no primeiro acesso. Rodar de novo não muda nada em conta que já existe. Dados em `seeds/amanda.js`.
+
+## Conta de teste (para ver um relatório)
+
+```bash
+SEED_TEST_PASSWORD='uma-senha' npm run seed:teste    # semana atual, dias até hoje
+SEED_TEST_PASSWORD='uma-senha' npm run seed:semana   # SEMANA PASSADA inteira (segunda a sexta), tudo finalizado
+```
+Cria/atualiza a conta `amanda.teste@neuroacompanha.com` (separada da conta real) com a Maria Fernanda e registros preenchidos (anotações informais, marcações, ocorrências e resumo). Na semana passada todos os dias já passaram: dá para abrir, editar e tocar em **Gerar relatório** no app.
