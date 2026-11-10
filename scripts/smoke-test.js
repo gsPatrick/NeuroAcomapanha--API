@@ -119,6 +119,7 @@ try {
   const registration = await call('POST', '/auth/passkeys/register/options');
   assert.equal(registration.options.rp.id, 'localhost');
   assert.equal(registration.options.authenticatorSelection.userVerification, 'required');
+  assert.equal(registration.options.authenticatorSelection.residentKey, 'required'); // login sem e-mail depende de credencial residente
   await call('POST', '/auth/passkeys/register/verify', { challengeToken: 'x'.repeat(20), response: device.create(registration.options) }, 400);
   assert.deepEqual(await call('POST', '/auth/passkeys/register/verify', { challengeToken: registration.challengeToken, response: device.create(registration.options), deviceName: 'iPhone' }, 201), { enabled: true });
 

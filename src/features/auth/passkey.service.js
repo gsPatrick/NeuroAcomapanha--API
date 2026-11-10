@@ -43,7 +43,7 @@ export async function startPasskeyRegistration(userId) {
     attestationType: 'none',
     excludeCredentials: user.passkeys.map((passkey) => ({ id: passkey.credentialId, transports: passkey.transports })),
     // Só o biométrico/bloqueio do próprio aparelho (Face ID, Touch ID, Windows Hello), com verificação obrigatória.
-    authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'preferred', userVerification: 'required' },
+    authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'required', userVerification: 'required' },
   });
   return { options, challengeToken: signChallenge(options.challenge, 'passkey-register', userId) };
 }
