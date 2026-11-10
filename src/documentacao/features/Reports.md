@@ -22,3 +22,6 @@ Quando `finish`/`suspend` fecha o último dia de atendimento da semana (todos os
 
 ## Erros comuns
 `OPENAI_NOT_CONFIGURED` (503), `OPENAI_RATE_LIMIT` (503), `OPENAI_TIMEOUT` (504), `OPENAI_INVALID_SHAPE` (502), `PDF_CONVERSION_FAILED` (500), `WEEK_EMPTY` (400). Falhas deixam o relatório em `failed` com o motivo em `errorMessage`; basta `POST` de novo.
+
+## Tabela "Registro de Comportamentos Inadequados"
+Não é preenchida pelo sistema. Vai **sempre em branco** (cabeçalho DATA / HORÁRIO / ANTECEDENTE / COMPORTAMENTO / CONSEQUÊNCIA e 8 linhas vazias), **sozinha numa página própria no fim do documento e centralizada no meio da página**, para a AT completar à mão. Fica numa seção própria do DOCX, então começa sempre em página nova, não importa o tamanho dos dias antes dela. O espaço acima do título é calculado (e não o alinhamento vertical do Word) porque o LibreOffice ignora aquele alinhamento ao gerar o PDF.

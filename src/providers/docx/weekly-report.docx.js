@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  AlignmentType, BorderStyle, Document, ImageRun, Packer, Paragraph, ShadingType, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType,
+  AlignmentType, BorderStyle, Document, ImageRun, Packer, Paragraph, SectionType, ShadingType, Table, TableCell, TableRow, TextRun, VerticalAlign, WidthType,
 } from 'docx';
 import { env } from '../../config/env.js';
 
@@ -88,7 +88,10 @@ function dayBlocks(day) {
   return blocks;
 }
 
-function behaviorTable(behaviors) {
+const BLANK_ROWS = 8;
+
+// Tabela em branco: a AT preenche à mão (o sistema não preenche). Linhas altas para escrever.
+function behaviorTable() {
   const widths = [1100, 1500, 2600, 2600, CONTENT_WIDTH - 7800];
   const cell = (text, index, fill) =>
     new TableCell({
@@ -99,23 +102,27 @@ function behaviorTable(behaviors) {
       children: [new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 60, after: 60 }, children: [run(text ?? '')] })],
     });
   const header = ['DATA', 'HORÁRIO', 'ANTECEDENTE', 'COMPORTAMENTO', 'CONSEQUÊNCIA'];
-  const rows = behaviors.length ? behaviors : [{ date: '', time: '', antecedent: '', behavior: '', consequence: '' }];
   return new Table({
     width: { size: CONTENT_WIDTH, type: WidthType.DXA },
     columnWidths: widths,
     rows: [
       new TableRow({ tableHeader: true, children: header.map((text, index) => cell(text, index, 'A8D08D')) }),
-      ...rows.map((row) => new TableRow({ cantSplit: true, height: { value: 700, rule: 'atLeast' }, children: [row.date, row.time, row.antecedent, row.behavior, row.consequence].map((text, index) => cell(text, index)) })),
+      ...Array.from({ length: BLANK_ROWS }, () => new TableRow({ cantSplit: true, height: { value: 900, rule: 'atLeast' }, children: header.map((_, index) => cell('', index)) })),
     ],
   });
 }
 
-function behaviorSection(behaviors) {
-  const message = behaviors.length ? 'Ocorrências registradas durante o período, conforme a tabela abaixo.' : 'Não foram observados comportamentos inadequados durante o período.';
+// Espaço acima do título para o bloco (título + tabela) ficar no MEIO da página. Calculado, e não pelo alinhamento vertical
+// do Word, porque o LibreOffice (que gera o PDF) ignora esse alinhamento. Altura da página A4 menos margens, menos o bloco, dividido por dois.
+const PAGE_HEIGHT = 16838;
+const BLOCK_HEIGHT = 500 + 480 + 600 + BLANK_ROWS * 900; // título + espaço + linha do cabeçalho + linhas em branco (aprox., em twips)
+const CENTERING_SPACE = Math.max(0, Math.round((PAGE_HEIGHT - MARGIN.top - MARGIN.bottom - BLOCK_HEIGHT) / 2));
+
+// Título + tabela, sozinhos numa página só deles (seção nova), no meio da página.
+function behaviorSection() {
   return [
-    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: 480 }, keepNext: true, children: [run('Registro de Comportamentos Inadequados:', { bold: true })] }),
-    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 240 }, keepNext: true, children: [run(message)] }),
-    behaviorTable(behaviors),
+    new Paragraph({ alignment: AlignmentType.CENTER, spacing: { before: CENTERING_SPACE, after: 240 }, keepNext: true, children: [run('Registro de Comportamentos Inadequados:', { bold: true })] }),
+    behaviorTable(),
   ];
 }
 
@@ -132,8 +139,12 @@ export async function buildWeeklyReportDocx(content) {
           titleBlock(logo),
           ...headerLines(content.header),
           ...content.days.flatMap(dayBlocks),
-          ...behaviorSection(content.behaviors),
         ],
+      },
+      {
+        // Seção própria: a tabela sempre começa numa página nova e fica sozinha, no meio da página.
+        properties: { type: SectionType.NEXT_PAGE, page: { size: { width: PAGE_WIDTH, height: 16838 }, margin: MARGIN } },
+        children: behaviorSection(),
       },
     ],
   });

@@ -24,7 +24,7 @@ const eventSchema = z.object({
   key: z.string().min(1).max(60), // marcação rápida ou 'note'
   at: z.number().int().positive(), // epoch em ms
   text: z.string().trim().max(3000).optional(),
-  antecedent: z.string().trim().max(500).optional(), // só para ocorrências (tabela ABC)
+  antecedent: z.string().trim().max(500).optional(), // reservado: o relatório não preenche a tabela de comportamentos
   consequence: z.string().trim().max(500).optional(),
 });
 

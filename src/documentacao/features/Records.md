@@ -23,7 +23,7 @@ Corpo do PUT:
 }
 ```
 `observed`/`goals` permitem que a AT escreva o texto de um momento à mão: ele entra no relatório **sem ser reescrito**. Rótulos de marcações e perguntas: `records.constants.js`.
-Ocorrências (`crisis`, `refusal`, `escape`, `stereotypy`, `aggression`, `overload`) viram linhas da tabela "Registro de Comportamentos Inadequados".
+As ocorrências (`crisis`, `refusal`, `escape`, `stereotypy`, `aggression`, `overload`) entram no texto dos momentos como qualquer marcação. A tabela "Registro de Comportamentos Inadequados" **não é preenchida** pelo sistema (ver Reports.md): `antecedent`/`consequence` ficam reservados e o relatório não os usa.
 
 ## Campos do app e respostas
 

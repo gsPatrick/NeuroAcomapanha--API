@@ -63,7 +63,6 @@ async function generate(report) {
       periodo: content.header.period,
       dias: content.days.length,
       etapas: content.days.reduce((sum, day) => sum + day.stages.length, 0),
-      ocorrencias: content.behaviors.length,
       paciente: content.header.patient,
       aplicadora: content.header.applicator,
     });

@@ -1,26 +1,12 @@
 import { env } from '../../config/env.js';
 import { createLogger, withLogContext } from '../../utils/logger.js';
 import { formatDayHeading, formatDayMonth, weekdayName } from '../../utils/dates.js';
-import { OCCURRENCE_MARKS, MARK_LABELS, DEFAULT_SUSPENSION_NOTE } from '../records/records.constants.js';
+import { DEFAULT_SUSPENSION_NOTE } from '../records/records.constants.js';
 import { NARRATIVE_CONCURRENCY } from './reports.constants.js';
 import { writeDayStages } from './report-narrative.service.js';
 import { attendanceDates } from './report-week.service.js';
 
 const log = createLogger('conteúdo');
-
-const timeOf = (epoch) => new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' }).format(new Date(epoch));
-
-// Ocorrências (crise, fuga...) viram linhas da tabela "Registro de Comportamentos Inadequados".
-function collectBehaviors(records) {
-  return records
-    .filter((record) => record.status === 'finished')
-    .flatMap((record) =>
-      record.events
-        .filter((event) => OCCURRENCE_MARKS.includes(event.key))
-        .sort((a, b) => a.at - b.at)
-        .map((event) => ({ date: formatDayMonth(record.date), time: timeOf(event.at), antecedent: event.antecedent ?? '', behavior: MARK_LABELS[event.key] ?? event.key, consequence: event.consequence ?? '' })),
-    );
-}
 
 // Roda `task` sobre a lista com no máximo `limit` ao mesmo tempo, mantendo a ordem do resultado.
 async function mapLimited(list, limit, task) {
@@ -53,6 +39,8 @@ function buildDay(child, record) {
 }
 
 // Conteúdo final do relatório (texto já redigido). É isto que fica salvo e vira DOCX/PDF.
+// A tabela "Registro de Comportamentos Inadequados" NÃO é preenchida pelo sistema: o documento leva a tabela em branco,
+// em página própria, para a AT completar à mão.
 export async function buildReportContent({ child, user, weekStart, records }) {
   const dates = attendanceDates(child, weekStart);
   const byDate = new Map(records.map((record) => [record.date, record]));
@@ -69,11 +57,6 @@ export async function buildReportContent({ child, user, weekStart, records }) {
   const first = closed[0]?.date ?? dates[0];
   const last = closed.at(-1)?.date ?? dates.at(-1);
 
-  const behaviors = collectBehaviors(closed);
-  log.info(`Tabela de comportamentos (ABC): ${behaviors.length} ocorrência(s).`, {
-    linhas: behaviors.map((row) => `${row.date} ${row.time} ${row.behavior}${row.antecedent ? '' : ' [sem antecedente]'}`).join(' | ') || 'nenhuma',
-  });
-
   return {
     header: {
       patient: child.fullName || child.name,
@@ -84,6 +67,5 @@ export async function buildReportContent({ child, user, weekStart, records }) {
       supervisor: child.supervisorName || env.REPORT_SUPERVISOR_NAME,
     },
     days,
-    behaviors,
   };
 }

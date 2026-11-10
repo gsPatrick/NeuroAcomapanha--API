@@ -236,7 +236,7 @@ try {
   assert.equal(report.content.days[1].note, 'atendimento suspenso pela família.');
   assert.equal(report.content.days[0].stages.length, 2, 'momento sem dados deve ser omitido');
   assert.equal(report.content.days[4].stages[0].observed, 'Texto escrito pela AT.', 'texto da AT não pode ser reescrito');
-  assert.equal(report.content.behaviors.length, 1);
+  assert.equal(report.content.behaviors, undefined, 'a tabela de comportamentos não é preenchida pelo sistema');
   assert.equal(aiCalls, 3, 'um pedido à IA por dia com atendimento (o dia 30 é todo manual e não chama)');
 
   const pdf = await call('GET', `${reports}/2026-10-26/download?format=pdf`);

@@ -6,7 +6,7 @@ Cada linha: `hora NÍVEL [rel código] [dia AAAA-MM-DD] [etapa] mensagem chave=v
 [http]       POST …/records/2026-11-10/finish → 200            a AT finalizou o dia
 [gatilho]    Dia fechado e a semana está COMPLETA / NÃO está completa (e quais dias faltam)
 [relatório]  ▶ INÍCIO · 1/4 conteúdo · 2/4 DOCX · 3/4 PDF · 4/4 gravação · ✔ PRONTO (ou ✖ FALHOU + motivo)
-[conteúdo]   quais dias entram, quais ficam de fora, dias suspensos, tabela ABC (ocorrências)
+[conteúdo]   quais dias entram, quais ficam de fora, dias suspensos
 [redação]    por dia: momentos com dados / omitidos por falta de dados / escritos pela AT (sem IA) e o que foi à IA
 [openai]     modelo, tempo, tokens de entrada/saída, id da resposta; erros (chave, limite, timeout…)
 [redação]    "IA redigiu X: N caracteres e N objetivos" · AVISO se a IA não devolveu um momento ·

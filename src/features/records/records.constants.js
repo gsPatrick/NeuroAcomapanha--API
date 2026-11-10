@@ -7,9 +7,6 @@ export const MARK_LABELS = {
   activityDone: 'Concluiu a atividade', askedHelp: 'Pediu ajuda', followedRule: 'Seguiu a instrução', interacted: 'Interagiu com alguém', eyeContact: 'Contato visual', newSkill: 'Algo novo',
 };
 
-// Marcações que contam como "comportamento inadequado" (vão para a tabela ABC do relatório).
-export const OCCURRENCE_MARKS = ['crisis', 'refusal', 'escape', 'stereotypy', 'aggression', 'overload'];
-
 // type: yesno (padrão) | choice | check | text
 export const QUESTION_LABELS = {
   arrivedHow: { label: 'Como chegou?', type: 'choice' }, enteredCalmly: { label: 'Entrou na sala tranquilamente?' }, helpFarewell: { label: 'Precisou de ajuda para se despedir da família?' },
